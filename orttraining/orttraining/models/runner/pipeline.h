@@ -97,9 +97,9 @@ class PipelineSlot {
   //
   // For NCCL PipDream schedule, it's used to support Wait -> Recv -> Record -> Wait -> Compute -> Record -> Wait -> Send -> Record.
 
-  // Events waited by this slot. 
+  // Events waited by this slot.
   std::vector<int> waited_events_;
-  // Events recorded by this slot. 
+  // Events recorded by this slot.
   std::vector<int> recorded_events_;
 };
 
@@ -124,7 +124,6 @@ class PipelineScheduler {
   int GetBackwardRecvRecordedEvent(const int batch_id, const int stage_id) const;
   // APIs to get MPI event event for
   // Wait -> Recv -> Wait -> Compute -> Record -> Send -> Record.
-
   int GetForwardWaitedEventBeforeRecv(const int batch_id, const int stage_id) const;
   int GetForwardWaitedEventAfterRecv(const int batch_id, const int stage_id) const;
   int GetForwardRecordedEventBeforeSend(const int batch_id, const int stage_id) const;

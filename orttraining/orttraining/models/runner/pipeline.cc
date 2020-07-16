@@ -20,26 +20,26 @@ namespace onnxruntime {
 namespace training {
 namespace pipeline {
 
-bool Action::IsForward() const {
+inline bool Action::IsForward() const {
   return pass == Pass::Forward;
 }
 
-bool Action::IsBackward() const {
+inline bool Action::IsBackward() const {
   return pass == Pass::Backward;
 }
 
-bool Action::IsCompute() const {
+inline bool Action::IsCompute() const {
   return type == Type::Compute;
 }
 
-bool Action::IsSendTo(const int dst_rank) const {
+inline bool Action::IsSendTo(const int dst_rank) const {
   if (type != Type::Send) {
     return false;
   }
   return peer_rank == dst_rank;
 }
 
-bool Action::IsRecvFrom(const int src_rank) const {
+inline bool Action::IsRecvFrom(const int src_rank) const {
   if (type != Type::Recv) {
     return false;
   }
@@ -97,20 +97,23 @@ void PipelineSlot::AddCompute(const int batch_id, const Action::Pass pass, const
   operators_.push_back(Action{batch_id, Action::Type::Compute, pass, upstream_time, upstream_stage});
 }
 
-bool PipelineSlot::IsEmpty() const {
+inline bool PipelineSlot::IsEmpty() const {
   return operators_.empty();
 };
-size_t PipelineSlot::NumActions() const {
+
+inline size_t PipelineSlot::NumActions() const {
   return operators_.size();
 }
-bool PipelineSlot::HasCompute() const {
+
+inline bool PipelineSlot::HasCompute() const {
   for (auto& op : operators_) {
     if (op.IsCompute())
       return true;
   }
   return false;
 }
-bool PipelineSlot::HasRendTo(const int stage) const {
+
+inline bool PipelineSlot::HasRendTo(const int stage) const {
   for (auto& op : operators_) {
     if (op.IsSendTo(stage)) {
       return true;
@@ -118,7 +121,8 @@ bool PipelineSlot::HasRendTo(const int stage) const {
   }
   return false;
 }
-bool PipelineSlot::HasRecvFrom(const int stage) const {
+
+inline bool PipelineSlot::HasRecvFrom(const int stage) const {
   for (auto& op : operators_) {
     if (op.IsRecvFrom(stage)) {
       return true;
@@ -126,15 +130,19 @@ bool PipelineSlot::HasRecvFrom(const int stage) const {
   }
   return false;
 }
+
 Action& PipelineSlot::operator[](int index) {
   return operators_[index];
 }
+
 const Action& PipelineSlot::operator[](int index) const {
   return operators_[index];
 }
+
 Action& PipelineSlot::GetFrontAction() {
   return operators_.front();
 }
+
 const Action& PipelineSlot::GetFrontAction() const {
   return operators_.front();
 }
@@ -180,15 +188,19 @@ std::ostream& operator<<(std::ostream& stream, const PipelineSlot& slot) {
   }
   return stream;
 }
+
 void PipelineSlot::SetWaitedEvent(const std::vector<int> events) {
   waited_events_ = std::move(events);
 }
+
 std::vector<int> PipelineSlot::GetWaitedEvent() const {
   return waited_events_;
 }
+
 void PipelineSlot::SetRecordedEvent(const std::vector<int> events) {
   recorded_events_ = std::move(events);
 }
+
 std::vector<int> PipelineSlot::GetRecordedEvent() const {
   return recorded_events_;
 }
@@ -214,11 +226,11 @@ std::ostream& operator<<(std::ostream& stream, PipelineScheduler const& schedule
   return stream;
 }
 
-size_t PipelineScheduler::GetScheduleSize() const {
+inline size_t PipelineScheduler::GetScheduleSize() const {
   return compute_commute_table_.size();
 }
 
-size_t PipelineScheduler::GetStageSize() const {
+inline size_t PipelineScheduler::GetStageSize() const {
   return num_stages_;
 }
 
@@ -537,62 +549,62 @@ int PipelineScheduler::GetEventOrDefault(
 }
 
 // Forward Compute
-int PipelineScheduler::GetForwardComputeWaitedEvent(const int batch_id, const int stage_id) const {
+inline int PipelineScheduler::GetForwardComputeWaitedEvent(const int batch_id, const int stage_id) const {
   return GetEventOrDefault(true, batch_id, stage_id, Action::Pass::Forward, Action::Type::Compute);
 }
 
 // Forward Compute
-int PipelineScheduler::GetForwardComputeRecordedEvent(const int batch_id, const int stage_id) const {
+inline int PipelineScheduler::GetForwardComputeRecordedEvent(const int batch_id, const int stage_id) const {
   return GetEventOrDefault(false, batch_id, stage_id, Action::Pass::Forward, Action::Type::Compute);
 }
 
 // Backward Compute
-int PipelineScheduler::GetBackwardComputeWaitedEvent(const int batch_id, const int stage_id) const {
+inline int PipelineScheduler::GetBackwardComputeWaitedEvent(const int batch_id, const int stage_id) const {
   return GetEventOrDefault(true, batch_id, stage_id, Action::Pass::Backward, Action::Type::Compute);
 }
 
 // Backward Compute
-int PipelineScheduler::GetBackwardComputeRecordedEvent(const int batch_id, const int stage_id) const {
+inline int PipelineScheduler::GetBackwardComputeRecordedEvent(const int batch_id, const int stage_id) const {
   return GetEventOrDefault(false, batch_id, stage_id, Action::Pass::Backward, Action::Type::Compute);
 }
 
 // Forward Send.
-int PipelineScheduler::GetForwardSendWaitedEvent(const int batch_id, const int stage_id) const {
+inline int PipelineScheduler::GetForwardSendWaitedEvent(const int batch_id, const int stage_id) const {
   return GetEventOrDefault(true, batch_id, stage_id, Action::Pass::Forward, Action::Type::Send);
 }
 
 // Forward Send.
-int PipelineScheduler::GetForwardSendRecordedEvent(const int batch_id, const int stage_id) const {
+inline int PipelineScheduler::GetForwardSendRecordedEvent(const int batch_id, const int stage_id) const {
   return GetEventOrDefault(false, batch_id, stage_id, Action::Pass::Forward, Action::Type::Send);
 }
 
 // Backward Send.
-int PipelineScheduler::GetBackwardSendWaitedEvent(const int batch_id, const int stage_id) const {
+inline int PipelineScheduler::GetBackwardSendWaitedEvent(const int batch_id, const int stage_id) const {
   return GetEventOrDefault(true, batch_id, stage_id, Action::Pass::Backward, Action::Type::Send);
 }
 
 // Backward Send.
-int PipelineScheduler::GetBackwardSendRecordedEvent(const int batch_id, const int stage_id) const {
+inline int PipelineScheduler::GetBackwardSendRecordedEvent(const int batch_id, const int stage_id) const {
   return GetEventOrDefault(false, batch_id, stage_id, Action::Pass::Backward, Action::Type::Send);
 }
 
 // Forward Recv.
-int PipelineScheduler::GetForwardRecvWaitedEvent(const int batch_id, const int stage_id) const {
+inline int PipelineScheduler::GetForwardRecvWaitedEvent(const int batch_id, const int stage_id) const {
   return GetEventOrDefault(true, batch_id, stage_id, Action::Pass::Forward, Action::Type::Recv);
 }
 
 // Forward Recv.
-int PipelineScheduler::GetForwardRecvRecordedEvent(const int batch_id, const int stage_id) const {
+inline int PipelineScheduler::GetForwardRecvRecordedEvent(const int batch_id, const int stage_id) const {
   return GetEventOrDefault(false, batch_id, stage_id, Action::Pass::Forward, Action::Type::Recv);
 }
 
 // Backward Recv.
-int PipelineScheduler::GetBackwardRecvWaitedEvent(const int batch_id, const int stage_id) const {
+inline int PipelineScheduler::GetBackwardRecvWaitedEvent(const int batch_id, const int stage_id) const {
   return GetEventOrDefault(true, batch_id, stage_id, Action::Pass::Backward, Action::Type::Recv);
 }
 
 // Backward Recv.
-int PipelineScheduler::GetBackwardRecvRecordedEvent(const int batch_id, const int stage_id) const {
+inline int PipelineScheduler::GetBackwardRecvRecordedEvent(const int batch_id, const int stage_id) const {
   return GetEventOrDefault(false, batch_id, stage_id, Action::Pass::Backward, Action::Type::Recv);
 }
 
@@ -650,35 +662,42 @@ int PipelineScheduler::GetComputeEventOrDefault(
   }
 }
 
-int PipelineScheduler::GetForwardWaitedEventBeforeRecv(const int batch_id, const int stage_id) const {
+inline int PipelineScheduler::GetForwardWaitedEventBeforeRecv(const int batch_id, const int stage_id) const {
   auto event = GetComputeEventOrDefault(true, batch_id, stage_id, Action::Pass::Forward, Action::Type::Recv);
   return event;
 }
-int PipelineScheduler::GetForwardWaitedEventAfterRecv(const int batch_id, const int stage_id) const {
+
+inline int PipelineScheduler::GetForwardWaitedEventAfterRecv(const int batch_id, const int stage_id) const {
   auto event = GetComputeEventOrDefault(false, batch_id, stage_id, Action::Pass::Forward, Action::Type::Recv);
   return event;
 }
-int PipelineScheduler::GetForwardRecordedEventBeforeSend(const int batch_id, const int stage_id) const {
+
+inline int PipelineScheduler::GetForwardRecordedEventBeforeSend(const int batch_id, const int stage_id) const {
   auto event = GetComputeEventOrDefault(true, batch_id, stage_id, Action::Pass::Forward, Action::Type::Send);
   return event;
 }
-int PipelineScheduler::GetForwardRecordedEventAfterSend(const int batch_id, const int stage_id) const {
+
+inline int PipelineScheduler::GetForwardRecordedEventAfterSend(const int batch_id, const int stage_id) const {
   auto event = GetComputeEventOrDefault(false, batch_id, stage_id, Action::Pass::Forward, Action::Type::Send);
   return event;
 }
-int PipelineScheduler::GetBackwardWaitedEventBeforeRecv(const int batch_id, const int stage_id) const {
+
+inline int PipelineScheduler::GetBackwardWaitedEventBeforeRecv(const int batch_id, const int stage_id) const {
   auto event = GetComputeEventOrDefault(true, batch_id, stage_id, Action::Pass::Backward, Action::Type::Recv);
   return event;
 }
-int PipelineScheduler::GetBackwardWaitedEventAfterRecv(const int batch_id, const int stage_id) const {
+
+inline int PipelineScheduler::GetBackwardWaitedEventAfterRecv(const int batch_id, const int stage_id) const {
   auto event = GetComputeEventOrDefault(false, batch_id, stage_id, Action::Pass::Backward, Action::Type::Recv);
   return event;
 }
-int PipelineScheduler::GetBackwardRecordedEventBeforeSend(const int batch_id, const int stage_id) const {
+
+inline int PipelineScheduler::GetBackwardRecordedEventBeforeSend(const int batch_id, const int stage_id) const {
   auto event = GetComputeEventOrDefault(true, batch_id, stage_id, Action::Pass::Backward, Action::Type::Send);
   return event;
 }
-int PipelineScheduler::GetBackwardRecordedEventAfterSend(const int batch_id, const int stage_id) const {
+
+inline int PipelineScheduler::GetBackwardRecordedEventAfterSend(const int batch_id, const int stage_id) const {
   auto event = GetComputeEventOrDefault(false, batch_id, stage_id, Action::Pass::Backward, Action::Type::Send);
   return event;
 }
